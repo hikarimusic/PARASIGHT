@@ -20,7 +20,7 @@ class App(TkinterDnD.Tk):
         # Theme
         theme = os.path.join(os.path.dirname(__file__), "azure.tcl")
         self.tk.call("source", theme)
-        self.tk.call("set_theme", "dark")
+        self.tk.call("set_theme", "light")
 
         # Configure
         self.columnconfigure(index=0, weight=1)
@@ -145,29 +145,6 @@ class Master(ttk.Frame):
         for i, col in enumerate(columns):
             self.result_tree.column(col, anchor="center", minwidth=widths[i], width=widths[i])
             self.result_tree.heading(col, text=col, anchor="center")
-        
-
-
-        #self.result_tree.column("#0", minwidth=0, stretch="no")
-        #self.result_tree.heading("#0", text="Label", anchor="center")
-        #for col in ["Parasite", "Confidence", "Position", "Size", "Image"]:
-        #    self.result_tree.column(col, anchor="center", minwidth=100, width=100)
-        #    self.result_tree.heading(col, text=col, anchor="center")
-
-
-        '''
-        self.result_scroll = ttk.Scrollbar(self.result_frame, orient="vertical")
-        self.result_scroll.grid(row=0, column=1, sticky="nsew")
-        self.result_tree = ttk.Treeview(self.result_frame, height=10)
-        #self.result_tree.config(columns=["Parasite", "Confidence", "Position", "Size", "Image"])
-        #self.result_tree.config(columns=["Parasite", "Confidence"])
-        self.result_tree.grid(row=0, column=0, sticky="nsew")
-        self.result_tree.config(yscrollcommand=self.result_scroll.set)
-        self.result_scroll.config(command=self.result_tree.yview)
-        self.result_tree.column("#0", anchor="center", minwidth=50, width=100)
-        self.result_tree.heading("#0", text="Label", anchor="center")        
-        '''
-
 
         # Variable
         self.img_pth = None
@@ -197,6 +174,9 @@ class Master(ttk.Frame):
         if pth:
             self.img_pth = pth
             self.open_label.config(text=pth)
+        for item in self.result_tree.get_children():
+            self.result_tree.delete(item)
+        self.update()
     
     def analyze(self):
         # Image List
@@ -213,18 +193,14 @@ class Master(ttk.Frame):
         else:
             img_lst = [self.img_pth]
 
-        # Show Setting
+        # Start Detection
         self.analyze_progress_2.tkraise()
         img_cnt = 0
-        for item in self.result_tree.get_children():
-            self.result_tree.delete(item)
-        self.update()
 
         # Detect
         depth = int(self.depth_spin.get())
         self.egg_imgs = []
         egg_cnt = 0
-        #detects = []
         for img_name in img_lst:
             # Padding
             img = cv2.imread(img_name)[:,:,::-1]
@@ -260,29 +236,26 @@ class Master(ttk.Frame):
 
             # Inference
             results = self.model(input_lst)
-            #results.print()
-            #print(place_lst)
-            #for i, pred in enumerate(results.pred):
-            #    print(i, pred)
-            #print(results.pred)
             boxes = []
-            for pred, place in zip(results.pred, place_lst):
+            for i, (pred, place) in enumerate(zip(results.pred, place_lst)):
                 if pred.numel() != 0:
                     pred_ = pred.clone()
                     pred_[:,0] += place[1]
                     pred_[:,1] += place[0]
                     pred_[:,2] += place[1]
                     pred_[:,3] += place[0]
+                    img_tag = torch.full((len(pred), 1), i, device='cuda')
+                    pred_ = torch.cat([pred_, img_tag], dim=1)
                     boxes.append(pred_)
             if boxes: boxes = torch.cat(boxes)
             else: boxes = torch.zeros(1, 6)
 
-            # Part NMS
+            # Size NMS
             confidence = float(self.confidence_spin.get())
             wh = boxes[:, 2:4] - boxes[:, 0:2]
             area = wh[:, 0] * wh[:, 1]
-            confs, order = torch.sort(boxes[:, 4], descending=True)
-            order = order[confs > confidence]
+            _ , order = torch.sort(area, descending=True)
+            order = order[boxes[order,4] > confidence]
             keep = []
             while order.shape[0] > 0:
                 keep.append(order[0])
@@ -295,7 +268,8 @@ class Master(ttk.Frame):
                 area_s = torch.minimum(area[idx_a], area[idx_b])
                 piou = area_i / area_s
                 order = order[piou < 0.8]
-            # detects = []
+
+            # Add Result
             if keep:
                 results.render()
                 for k in keep:
@@ -305,71 +279,28 @@ class Master(ttk.Frame):
                     position = "({}, {})".format(int((info[0]+info[2])/2), int((info[1]+info[3])/2))
                     size = "({}, {})".format(int(info[2]-info[0]), int(info[3]-info[1]))
                     image = os.path.basename(img_name)
-                    # detects.append([parasite, confidence, position, size, image])
                     detect = [parasite, confidence, position, size, image]
                     self.result_tree.insert("", index="end", values=detect, tags=egg_cnt)
                     egg_cnt += 1
-                    self.egg_imgs.append(results.ims[k])
-
-
-                    #print(type(results.ims[k]))
-                    #print(results.ims[k].shape)
-                    #cv2.imshow("temp", results.ims[k])
-
+                    self.egg_imgs.append(results.ims[boxes[k, 6].int()])
                     self.update()
 
-            # Show Result
+            # Progress
             img_cnt += 1
             self.progress_bar['value'] = img_cnt * 100 / len(img_lst)
-            #for detect in detects:
-            #    self.result_tree.insert(egg_cnt, index="end", values=detect)
             self.update()
-                
-            #keep = torch.stack(keep)
-            #detects.append(boxes[keep].tolist() + [])
-            #detects = boxes[keep]
-            #print(detects)
         
         self.analyze_progress_1.tkraise()
-        #if detects: detects = torch.cat(detects)
-        #else: return
-        #print(detects)
 
-        # Show Result
-        #for detect in detects:
-        #    self.result_tree.insert('', index="end", values=detect)
-
-        #print(results.pandas().xyxy)
-        #print(results.pred)
-        #results.print()
-        #results.save()
-
-
-
-        #imgs = [self.img_pth]
-        #imgs = ['img.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img7.jpg', 'img8.jpg']
-        #imgs = ['azure.tcl']
-        #imgs = ['https://ultralytics.com/images/zidane.jpg']  # batch of images
-        #imgs = ['img.jpg']
-        #results = self.model(imgs)
-        #print(type(results))
-        #print(results.pred)
-        
-        #results.print()
-        #results.save()
     def tree_select(self):
-        #print(self.result_tree.selection())
-        #print(self.result_tree.item(self.result_tree.selection()))
+        geometry = self.master.geometry()
         img_tag = self.result_tree.item(self.result_tree.selection())["tags"][0]
-        image = Image.fromarray(self.egg_imgs[img_tag][:,:,::-1])
-        #image = Image.fromarray(np.ones((1000, 1000, 3)))
-        image = image.resize((1000, 1000))
-        image_show = ImageTk.PhotoImage(image)
-        self.image_label.config(image=image_show)
-        self.update()
-        print("com")
-
-
+        image = Image.fromarray(self.egg_imgs[img_tag])
+        size = min(self.image_label.winfo_width(), self.image_label.winfo_height())
+        image = image.resize((size, size))
+        self.image_show = ImageTk.PhotoImage(image)
+        self.image_label.config(image=self.image_show)
+        self.master.geometry(geometry)
 
 if __name__ == "__main__":
     root = App()

@@ -254,3 +254,10 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+
+# PARASIGHT
+!/parasight/theme/light/*
+!/parasight/theme/dark/*
+!/result/train/exp/*
+!/result/test/exp/*
