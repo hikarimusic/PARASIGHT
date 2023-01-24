@@ -1,0 +1,23 @@
+# parasite eggs dataset
+# source: Parasitic Egg Detection and Classification in Microscopic Images
+# url: https://ieee-dataport.org/competitions/parasitic-egg-detection-and-classification-microscopic-images
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ./data/dataset  # dataset root dir
+train: train  # train images (relative to 'path') 128 images
+val: train  # val images (relative to 'path') 128 images
+test:  test # test images (optional)
+
+# Classes
+names:
+  0: Ascaris lumbricoides
+  1: Capillaria philippinensis
+  2: Enterobius vermicularis
+  3: Fasciolopsis buski
+  4: Hookworm
+  5: Hymenolepis diminuta
+  6: Hymenolepis nana
+  7: Opisthorchis viverrine
+  8: Paragonimus spp
+  9: Taenia spp
+  10: Trichuris trichiura
