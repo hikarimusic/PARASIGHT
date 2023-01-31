@@ -6,6 +6,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from PIL import ImageTk, Image
+import pandas as pd
+import sys
 
 class App(TkinterDnD.Tk):
     def __init__(self):
@@ -90,7 +92,7 @@ class Master(ttk.Frame):
         self.depth_label = ttk.Label(self.analyze_frame, text="Depth")
         self.depth_label.grid(row=0, column=0, padx=5, pady=5)
         self.depth_spin = ttk.Spinbox(self.analyze_frame, from_=1, to=5, increment=1, width=4)
-        self.depth_spin.set(3)
+        self.depth_spin.set(1)
         self.depth_spin.grid(row=0, column=1, padx=5, pady=5)
 
         # Analyze Confidence
@@ -146,8 +148,18 @@ class Master(ttk.Frame):
             self.result_tree.column(col, anchor="center", minwidth=widths[i], width=widths[i])
             self.result_tree.heading(col, text=col, anchor="center")
 
+        # Save Frame
+        self.save_frame = ttk.Frame(self)
+        self.save_frame.columnconfigure(index=0, weight=1)
+        self.save_frame.grid(row=2, column=1, sticky="nsew")
+
+        # Save Button
+        self.save_button = ttk.Button(self.save_frame, text="Save", command=self.save)
+        self.save_button.grid(row=0, column=1, padx=5, pady=5)
+
         # Variable
         self.img_pth = None
+        self.record = pd.DataFrame([])
         self.parasite_name = [
             "Ascaris lumbricoides",
             "Capillaria philippinensis",
@@ -174,9 +186,6 @@ class Master(ttk.Frame):
         if pth:
             self.img_pth = pth
             self.open_label.config(text=pth)
-        for item in self.result_tree.get_children():
-            self.result_tree.delete(item)
-        self.update()
     
     def analyze(self):
         # Image List
@@ -187,7 +196,7 @@ class Master(ttk.Frame):
             )
             return
         if os.path.isdir(self.img_pth):
-            img_lst = [f for f in os.listdir(self.img_pth)]
+            img_lst = [f for f in os.listdir(self.img_pth) if f.endswith('.png') or f.endswith('.jpeg') or f.endswith('.jpg')]
             img_lst.sort()
             img_lst = [os.path.join(self.img_pth, f) for f in img_lst]
         else:
@@ -196,11 +205,15 @@ class Master(ttk.Frame):
         # Start Detection
         self.analyze_progress_2.tkraise()
         img_cnt = 0
+        for item in self.result_tree.get_children():
+            self.result_tree.delete(item)
+        self.update()
 
         # Detect
         depth = int(self.depth_spin.get())
         self.egg_imgs = []
         egg_cnt = 0
+        record = []
         for img_name in img_lst:
             # Padding
             img = cv2.imread(img_name)[:,:,::-1]
@@ -235,6 +248,8 @@ class Master(ttk.Frame):
             place_lst = [j for i in place_lst for j in i]
 
             # Inference
+            confidence = float(self.confidence_spin.get())
+            self.model.conf = confidence
             results = self.model(input_lst)
             boxes = []
             for i, (pred, place) in enumerate(zip(results.pred, place_lst)):
@@ -247,42 +262,47 @@ class Master(ttk.Frame):
                     img_tag = torch.full((len(pred), 1), i, device='cuda')
                     pred_ = torch.cat([pred_, img_tag], dim=1)
                     boxes.append(pred_)
-            if boxes: boxes = torch.cat(boxes)
-            else: boxes = torch.zeros(1, 6)
 
-            # Size NMS
-            confidence = float(self.confidence_spin.get())
-            wh = boxes[:, 2:4] - boxes[:, 0:2]
-            area = wh[:, 0] * wh[:, 1]
-            _ , order = torch.sort(area, descending=True)
-            order = order[boxes[order,4] > confidence]
-            keep = []
-            while order.shape[0] > 0:
-                keep.append(order[0])
-                idx_a = order[0:1].repeat(order.shape[0])
-                idx_b = order
-                inter_1 = torch.maximum(boxes[idx_a, 0:2], boxes[idx_b, 0:2])
-                inter_2 = torch.maximum(boxes[idx_a, 2:4], boxes[idx_b, 2:4])
-                inter = torch.clamp(inter_2 - inter_1, 0)
-                area_i = inter[:, 0] * inter[:, 1]
-                area_s = torch.minimum(area[idx_a], area[idx_b])
-                piou = area_i / area_s
-                order = order[piou < 0.8]
+            # Process
+            if boxes: 
+                boxes = torch.cat(boxes)
+            
+                # NMS
+                wh = boxes[:, 2:4] - boxes[:, 0:2]
+                area = wh[:, 0] * wh[:, 1]
+                confs, order = torch.sort(boxes[:, 4], descending=True)
+                order = order[confs > confidence]
+                keep = []
+                while order.shape[0] > 0:
+                    keep.append(order[0])
+                    idx_a = order[0:1].repeat(order.shape[0])
+                    idx_b = order
+                    inter_1 = torch.maximum(boxes[idx_a, 0:2], boxes[idx_b, 0:2])
+                    inter_2 = torch.maximum(boxes[idx_a, 2:4], boxes[idx_b, 2:4])
+                    inter = torch.clamp(inter_2 - inter_1, 0)
+                    area_i = inter[:, 0] * inter[:, 1]
+                    area_s = torch.minimum(area[idx_a], area[idx_b])
+                    piou = area_i / area_s
+                    same = boxes[idx_a, 5] == boxes[idx_b, 5]
+                    order = order[torch.logical_or(piou<0.8, same==False)]
 
-            # Add Result
-            if keep:
+                # Add Result
                 results.render()
                 for k in keep:
                     info = boxes[k].tolist()
                     parasite = self.parasite_name[int(info[5])]
-                    confidence = '{0:.0%}'.format(info[4])
-                    position = "({}, {})".format(int((info[0]+info[2])/2), int((info[1]+info[3])/2))
-                    size = "({}, {})".format(int(info[2]-info[0]), int(info[3]-info[1]))
+                    c = info[4]
+                    confidence = '{0:.0%}'.format(c)
+                    x, y = int((info[0]+info[2])/2), int((info[1]+info[3])/2)
+                    w, h = int(info[2]-info[0]), int(info[3]-info[1])
+                    position = "({}, {})".format(x, y)
+                    size = "({}, {})".format(w, h)
                     image = os.path.basename(img_name)
                     detect = [parasite, confidence, position, size, image]
                     self.result_tree.insert("", index="end", values=detect, tags=egg_cnt)
                     egg_cnt += 1
                     self.egg_imgs.append(results.ims[boxes[k, 6].int()])
+                    record.append([parasite, '{:.2f}'.format(c), x, y, w, h, image])
                     self.update()
 
             # Progress
@@ -290,6 +310,7 @@ class Master(ttk.Frame):
             self.progress_bar['value'] = img_cnt * 100 / len(img_lst)
             self.update()
         
+        self.record = pd.DataFrame(record, columns=["Parasite", "Confidence", "X", "Y", "W", "H", "Image"])
         self.analyze_progress_1.tkraise()
 
     def tree_select(self):
@@ -301,6 +322,19 @@ class Master(ttk.Frame):
         self.image_show = ImageTk.PhotoImage(image)
         self.image_label.config(image=self.image_show)
         self.master.geometry(geometry)
+    
+    def save(self):
+        platform = sys.platform
+        if platform == "linux": ext = None
+        else: ext = "*.*"
+        filename = filedialog.asksaveasfilename(
+            title="Save File",
+            filetypes=[("CSV File", "*.csv")],
+            initialfile="result",
+            defaultextension=ext
+        )
+        if filename:
+            self.record.to_csv(filename, index=False)
 
 if __name__ == "__main__":
     root = App()

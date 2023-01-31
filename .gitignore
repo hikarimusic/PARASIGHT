@@ -34,6 +34,7 @@ data/images/*
 !data/images/zidane.jpg
 !data/images/bus.jpg
 !data/*.sh
+!data/*.py
 
 results*.csv
 
@@ -259,5 +260,5 @@ fabric.properties
 # PARASIGHT
 !/parasight/theme/light/*
 !/parasight/theme/dark/*
-!/result/train/exp/*
-!/result/test/exp/*
+!/exp/result/train/*
+!/exp/result/val/*
