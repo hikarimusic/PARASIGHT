@@ -260,5 +260,5 @@ fabric.properties
 # PARASIGHT
 !/parasight/theme/light/*
 !/parasight/theme/dark/*
-!/exp/result/train/*
-!/exp/result/val/*
+!/exp/runs/train/exp/*
+!/exp/runs/val/exp/*

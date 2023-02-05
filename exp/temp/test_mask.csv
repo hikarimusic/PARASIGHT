@@ -1,0 +1,55 @@
+Parasite,Confidence,X,Y,W,H,Image
+Hookworm,0.81,511,506,59,103,c0024.jpg
+Hookworm,0.76,512,526,74,94,c0059.jpg
+Opisthorchis viverrine,0.60,504,517,23,35,c0072.jpg
+Hookworm,0.94,611,531,59,89,c0073.jpg
+Enterobius vermicularis,0.65,51,550,102,78,c0074.jpg
+Ascaris lumbricoides,0.68,593,371,101,108,c0118.jpg
+Paragonimus spp,0.65,593,371,100,108,c0118.jpg
+Enterobius vermicularis,0.55,293,809,174,101,c0151.jpg
+Hookworm,0.89,517,508,63,106,c0245.jpg
+Hookworm,0.60,519,501,87,64,c0324.jpg
+Capillaria philippinensis,0.66,282,480,69,37,c0326.jpg
+Enterobius vermicularis,0.54,31,427,62,120,c0388.jpg
+Capillaria philippinensis,0.76,496,527,35,69,c0405.jpg
+Opisthorchis viverrine,0.59,800,477,101,60,c0471.jpg
+Ascaris lumbricoides,0.57,285,553,78,106,c0519.jpg
+Hookworm,0.61,393,535,67,113,c0570.jpg
+Hookworm,0.83,634,485,81,78,c0591.jpg
+Hookworm,0.58,630,526,83,87,c0653.jpg
+Capillaria philippinensis,0.82,499,573,63,32,c0801.jpg
+Enterobius vermicularis,0.54,67,432,134,168,c0809.jpg
+Capillaria philippinensis,0.59,519,514,36,60,c0822.jpg
+Capillaria philippinensis,0.70,510,521,35,58,c0842.jpg
+Hookworm,0.75,517,525,72,108,c0868.jpg
+Trichuris trichiura,0.70,506,557,77,35,c0895.jpg
+Capillaria philippinensis,0.74,619,532,39,72,c0978.jpg
+Capillaria philippinensis,0.72,518,573,64,32,c1028.jpg
+Hookworm,0.76,743,504,113,199,c1057.jpg
+Opisthorchis viverrine,0.54,619,557,29,29,c1080.jpg
+Capillaria philippinensis,0.58,398,519,72,37,c1113.jpg
+Capillaria philippinensis,0.61,1004,461,38,84,c1174.jpg
+Opisthorchis viverrine,0.90,455,437,37,26,c1181.jpg
+Opisthorchis viverrine,0.86,912,677,62,30,c1202.jpg
+Opisthorchis viverrine,0.72,392,493,19,37,c1221.jpg
+Paragonimus spp,0.70,627,522,82,41,c1243.jpg
+Taenia spp,0.86,277,142,63,66,c1283.jpg
+Opisthorchis viverrine,0.72,503,298,52,25,c1283.jpg
+Paragonimus spp,0.59,521,534,56,94,c1353.jpg
+Hookworm,0.66,495,686,75,131,c1479.jpg
+Hookworm,0.74,517,523,65,102,c1540.jpg
+Hookworm,0.72,496,502,96,58,c1569.jpg
+Capillaria philippinensis,0.52,639,527,68,41,c1578.jpg
+Paragonimus spp,0.71,601,472,210,174,c1617.jpg
+Ascaris lumbricoides,0.95,548,418,173,167,c1622.jpg
+Hymenolepis nana,0.70,548,416,178,177,c1622.jpg
+Hookworm,0.68,525,512,65,108,c1742.jpg
+Capillaria philippinensis,0.69,620,501,42,78,c1867.jpg
+Capillaria philippinensis,0.83,486,516,37,59,c1895.jpg
+Capillaria philippinensis,0.76,522,543,75,34,c1954.jpg
+Hookworm,0.84,517,535,67,102,c1959.jpg
+Capillaria philippinensis,0.64,511,537,61,38,c2128.jpg
+Capillaria philippinensis,0.61,408,534,35,71,c2132.jpg
+Opisthorchis viverrine,0.50,514,515,48,25,c2139.jpg
+Opisthorchis viverrine,0.82,685,468,20,31,c2175.jpg
+Enterobius vermicularis,0.70,184,389,146,144,c2181.jpg

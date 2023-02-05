@@ -17,4 +17,14 @@ def compute_hsv_mean_std():
     print('mean', mean / len(img_lst))
     print('std', std / len(img_lst))
 
-compute_hsv_mean_std()
+def read_mask():
+    import pandas as pd 
+    import os
+    mask = pd.read_csv(os.path.join(os.getcwd(), 'test_mask.csv'))
+    result = []
+    for id, row in mask.iterrows():
+        result.append(int(row["Image"][1:-4])-1)
+    print(result)
+
+#compute_hsv_mean_std()
+read_mask()

@@ -1,3 +1,6 @@
+'''
+/PARASIGHT/parasight/app_val.py
+'''
 import os
 import torch
 import cv2
@@ -7,7 +10,7 @@ from tkinter import ttk, filedialog, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 from PIL import ImageTk, Image
 import pandas as pd
-import sys
+import time
 
 class App(TkinterDnD.Tk):
     def __init__(self):
@@ -105,7 +108,7 @@ class Master(ttk.Frame):
         # Analyze Button
         self.analyze_progress_1 = ttk.Frame(self.analyze_frame)
         self.analyze_progress_1.grid(row=0, column=5, sticky="nsew")
-        self.analyze_button = ttk.Button(self.analyze_progress_1, text="Anaylze", command=self.analyze)
+        self.analyze_button = ttk.Button(self.analyze_progress_1, text="Anaylze", command=self.start)
         self.analyze_button.grid(row=0, column=0, padx=5, pady=5)
 
         # Progress bar
@@ -174,7 +177,36 @@ class Master(ttk.Frame):
             "Trichuris trichiura"
         ]
 
-    def open(self, kind):
+        self.update()
+
+    def start(self):
+        # Analyze
+        self.depth_spin.set(3)
+        t_analyze = []
+        for i in range(11):
+            for j in range(4):
+                src_pth = os.path.join(os.path.dirname(os.getcwd()), 'data', 'dataset', 'whole_slide', f"{i}_{j}")
+                self.open(src_pth)
+                t_start = time.time()
+                self.analyze()
+                t_end = time.time()
+                t_analyze.append(t_end-t_start)
+                print(f"analyze_time: {t_end-t_start} s")
+                tgt_pth = os.path.join(os.path.dirname(os.getcwd()), 'exp', 'temp', 'whole_slide', f"{i}_{j}_pred.csv")
+                self.save(tgt_pth)
+                lbl_pth = os.path.join(os.path.dirname(os.getcwd()), 'data', 'dataset', 'whole_slide', f"{i}_{j}", 'label.csv')
+                lbl = pd.read_csv(lbl_pth)
+                tgt_pth = os.path.join(os.path.dirname(os.getcwd()), 'exp', 'temp', 'whole_slide', f"{i}_{j}_label.csv")
+                lbl.to_csv(tgt_pth, index=False)
+        t_analyze = ['{:.2f}'.format(t) + '\n' for t in t_analyze]
+        t_average = '{:.2f}'.format(sum(t_analyze)/len(t_analyze))
+        print("Average time", t_average)
+        with open(os.path.join(os.path.dirname(os.getcwd()), 'exp', 'temp', 'time.txt'), 'w') as f:
+            f.writelines(t_analyze)
+            f.writelines(f"Average: {t_average}\n")      
+
+    def open(self, pth):
+        '''
         if kind == "image":
             pth = filedialog.askopenfilename(
                 title="Open Image"
@@ -182,7 +214,8 @@ class Master(ttk.Frame):
         elif kind == "folder":
             pth = filedialog.askdirectory(
                 title="Open Folder"
-            )
+            )        
+        '''
         if pth:
             self.img_pth = pth
             self.open_label.config(text=pth)
@@ -325,7 +358,8 @@ class Master(ttk.Frame):
         self.image_label.config(image=self.image_show)
         self.master.geometry(geometry)
     
-    def save(self):
+    def save(self, filename):
+        '''
         platform = sys.platform
         if platform == "linux": ext = None
         else: ext = "*.*"
@@ -334,7 +368,8 @@ class Master(ttk.Frame):
             filetypes=[("CSV File", "*.csv")],
             initialfile="result",
             defaultextension=ext
-        )
+        )        
+        '''
         if filename:
             self.record.to_csv(filename, index=False)
 

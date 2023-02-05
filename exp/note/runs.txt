@@ -1,0 +1,130 @@
+python3 train.py --img 640 --batch -1 --epochs 300 --data parasite.yaml --weights yolov5l.pt
+--------------------------------------------------------------------------------------------
+train: weights=yolov5l.pt, cfg=, data=parasite.yaml, hyp=data/hyps/hyp.scratch-low.yaml, epochs=300, batch_size=-1, imgsz=640, rect=False, resume=False, nosave=False, noval=False, noautoanchor=False, noplots=False, evolve=None, bucket=, cache=None, image_weights=False, device=, multi_scale=False, single_cls=False, optimizer=SGD, sync_bn=False, workers=8, project=runs/train, name=exp, exist_ok=False, quad=False, cos_lr=False, label_smoothing=0.0, patience=100, freeze=[0], save_period=-1, seed=0, local_rank=-1, entity=None, upload_dataset=False, bbox_interval=-1, artifact_alias=latest
+remote: Enumerating objects: 96, done.
+remote: Counting objects: 100% (41/41), done.
+remote: Total 96 (delta 41), reused 41 (delta 41), pack-reused 55
+Unpacking objects: 100% (96/96), 64.67 KiB | 2.94 MiB/s, done.
+From https://github.com/ultralytics/yolov5
+   f5a2ff8..00070f3  exp13-soft          -> ultralytics/exp13-soft
+ * [new branch]      fix_zero_labels     -> ultralytics/fix_zero_labels
+   65071da..064365d  master              -> ultralytics/master
+ * [new branch]      taliabender-patch-1 -> ultralytics/taliabender-patch-1
+ * [new branch]      v8_banner           -> ultralytics/v8_banner
+github: ⚠️ YOLOv5 is out of date by 2556 commits. Use `git pull ultralytics master` or `git clone https://github.com/ultralytics/yolov5` to update.
+YOLOv5 🚀 d277e84 Python-3.8.10 torch-1.13.1+cu117 CUDA:0 (NVIDIA GeForce RTX 3090, 24576MiB)
+
+hyperparameters: lr0=0.01, lrf=0.01, momentum=0.937, weight_decay=0.0005, warmup_epochs=3.0, warmup_momentum=0.8, warmup_bias_lr=0.1, box=0.05, cls=0.5, cls_pw=1.0, obj=1.0, obj_pw=1.0, iou_t=0.2, anchor_t=4.0, fl_gamma=0.0, hsv_h=0.015, hsv_s=0.7, hsv_v=0.4, degrees=0.0, translate=0.1, scale=0.5, shear=0.0, perspective=0.0, flipud=0.0, fliplr=0.5, mosaic=1.0, mixup=0.0, copy_paste=0.0
+ClearML: run 'pip install clearml' to automatically track, visualize and remotely train YOLOv5 🚀 in ClearML
+Comet: run 'pip install comet_ml' to automatically track and visualize YOLOv5 🚀 runs in Comet
+TensorBoard: Start with 'tensorboard --logdir runs/train', view at http://localhost:6006/
+Overriding model.yaml nc=80 with nc=11
+
+                 from  n    params  module                                  arguments
+  0                -1  1      7040  models.common.Conv                      [3, 64, 6, 2, 2]
+  1                -1  1     73984  models.common.Conv                      [64, 128, 3, 2]
+  2                -1  3    156928  models.common.C3                        [128, 128, 3]
+  3                -1  1    295424  models.common.Conv                      [128, 256, 3, 2]
+  4                -1  6   1118208  models.common.C3                        [256, 256, 6]
+  5                -1  1   1180672  models.common.Conv                      [256, 512, 3, 2]
+  6                -1  9   6433792  models.common.C3                        [512, 512, 9]
+  7                -1  1   4720640  models.common.Conv                      [512, 1024, 3, 2]
+  8                -1  3   9971712  models.common.C3                        [1024, 1024, 3]
+  9                -1  1   2624512  models.common.SPPF                      [1024, 1024, 5]
+ 10                -1  1    525312  models.common.Conv                      [1024, 512, 1, 1]
+ 11                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']
+ 12           [-1, 6]  1         0  models.common.Concat                    [1]
+ 13                -1  3   2757632  models.common.C3                        [1024, 512, 3, False]
+ 14                -1  1    131584  models.common.Conv                      [512, 256, 1, 1]
+ 15                -1  1         0  torch.nn.modules.upsampling.Upsample    [None, 2, 'nearest']
+ 16           [-1, 4]  1         0  models.common.Concat                    [1]
+ 17                -1  3    690688  models.common.C3                        [512, 256, 3, False]
+ 18                -1  1    590336  models.common.Conv                      [256, 256, 3, 2]
+ 19          [-1, 14]  1         0  models.common.Concat                    [1]
+ 20                -1  3   2495488  models.common.C3                        [512, 512, 3, False]
+ 21                -1  1   2360320  models.common.Conv                      [512, 512, 3, 2]
+ 22          [-1, 10]  1         0  models.common.Concat                    [1]
+ 23                -1  3   9971712  models.common.C3                        [1024, 1024, 3, False]
+ 24      [17, 20, 23]  1     86160  models.yolo.Detect                      [11, [[10, 13, 16, 30, 33, 23], [30, 61, 62, 45, 59, 119], [116, 90, 156, 198, 373, 326]], [256, 512, 1024]]
+Model summary: 368 layers, 46192144 parameters, 46192144 gradients, 108.4 GFLOPs
+
+Transferred 607/613 items from yolov5l.pt
+AMP: checks passed ✅
+AutoBatch: Computing optimal batch size for --imgsz 640
+AutoBatch: CUDA:0 (NVIDIA GeForce RTX 3090) 24.00G total, 0.60G reserved, 0.35G allocated, 23.05G free
+      Params      GFLOPs  GPU_mem (GB)  forward (ms) backward (ms)                   input                  output
+    46192144       108.4         1.156         44.04         12.77        (1, 3, 640, 640)                    list
+    46192144       216.8         1.609         22.97         12.57        (2, 3, 640, 640)                    list
+    46192144       433.6         2.628         27.98         18.57        (4, 3, 640, 640)                    list
+    46192144       867.2         4.689         48.08         35.75        (8, 3, 640, 640)                    list
+    46192144        1734         9.001         93.78          65.9       (16, 3, 640, 640)                    list
+AutoBatch: Using batch-size 34 for CUDA:0 19.35G/24.00G (81%) ✅
+optimizer: SGD(lr=0.01) with parameter groups 101 weight(decay=0.0), 104 weight(decay=0.00053125), 104 bias
+train: Scanning /home/hikari/PARASIGHT/data/dataset/train.cache... 11000 images, 0 backgrounds, 5 corrupt: 100%|██████████| 11000/11000 00:00
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Ascaris_lumbricoides_0526.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.0442]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Hookworm_0339.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.0899]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0012.jpg: ignoring corrupt image/label: negative label values [   -0.10435]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0143.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.2664]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0144.jpg: ignoring corrupt image/label: negative label values [  -0.004464]
+val: Scanning /home/hikari/PARASIGHT/data/dataset/train.cache... 11000 images, 0 backgrounds, 5 corrupt: 100%|██████████| 11000/11000 00:00
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Ascaris_lumbricoides_0526.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.0442]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Hookworm_0339.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.0899]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0012.jpg: ignoring corrupt image/label: negative label values [   -0.10435]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0143.jpg: ignoring corrupt image/label: non-normalized or out of bounds coordinates [     1.2664]
+train: WARNING ⚠️ /home/hikari/PARASIGHT/data/dataset/train/Opisthorchis_viverrine_0144.jpg: ignoring corrupt image/label: negative label values [  -0.004464]
+
+AutoAnchor: 5.88 anchors/target, 1.000 Best Possible Recall (BPR). Current anchors are a good fit to dataset ✅
+Plotting labels to runs/train/exp/labels.jpg...
+Image sizes 640 train, 640 val
+Using 8 dataloader workers
+Logging results to runs/train/exp
+Starting training for 300 epochs...
+
+------------------------------------
+
+300 epochs completed in 20.769 hours.
+Optimizer stripped from runs/train/exp/weights/last.pt, 92.8MB
+Optimizer stripped from runs/train/exp/weights/best.pt, 92.8MB
+
+Validating runs/train/exp/weights/best.pt...
+Fusing layers...
+Model summary: 267 layers, 46162128 parameters, 0 gradients, 107.8 GFLOPs
+                 Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 162/162 01:22
+                   all      10995      11026      0.999          1      0.995      0.976
+  Ascaris lumbricoides      10995       1008          1          1      0.995      0.985
+Capillaria philippinensis      10995       1000          1          1      0.995      0.957
+Enterobius vermicularis      10995       1000      0.998          1      0.995      0.973
+    Fasciolopsis buski      10995       1000      0.997          1      0.995      0.992
+              Hookworm      10995       1009      0.999      0.999      0.995      0.986
+  Hymenolepis diminuta      10995       1000          1          1      0.995      0.991
+      Hymenolepis nana      10995       1001          1          1      0.995      0.973
+Opisthorchis viverrine      10995        997      0.999      0.999      0.995       0.93
+       Paragonimus spp      10995       1000      0.998          1      0.995      0.992
+            Taenia spp      10995       1011      0.999          1      0.995      0.981
+   Trichuris trichiura      10995       1000      0.998          1      0.994      0.978
+Results saved to runs/train/exp
+
+---------------------------------------------------------------------------
+python3 val.py --img 640 --data parasite.yaml --weights best.pt --task test
+---------------------------------------------------------------------------
+val: data=/home/hikari/PARASIGHT/data/parasite.yaml, weights=['best.pt'], batch_size=32, imgsz=640, conf_thres=0.001, iou_thres=0.6, max_det=300, task=test, device=, workers=8, single_cls=False, augment=False, verbose=False, save_txt=False, save_hybrid=False, save_conf=False, save_json=False, project=runs/val, name=exp, exist_ok=False, half=False, dnn=False
+YOLOv5 🚀 d277e84 Python-3.8.10 torch-1.13.1+cu117 CUDA:0 (NVIDIA GeForce RTX 3090, 24576MiB)
+
+Fusing layers...
+Model summary: 267 layers, 46162128 parameters, 0 gradients, 107.8 GFLOPs
+test: Scanning /home/hikari/PARASIGHT/data/dataset/test.cache... 2200 images, 0 backgrounds, 0 corrupt: 100%|██████████| 2200/2200 00:00
+                 Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 69/69 00:20
+                   all       2200       2229      0.939      0.923      0.968       0.91
+  Ascaris lumbricoides       2200        207      0.947       0.71       0.91      0.869
+Capillaria philippinensis       2200        203      0.946      0.946      0.982      0.878
+Enterobius vermicularis       2200        200       0.97      0.965       0.98        0.9
+    Fasciolopsis buski       2200        199          1       0.97      0.986       0.95
+              Hookworm       2200        204          1      0.993      0.995       0.92
+  Hymenolepis diminuta       2200        200       0.68          1      0.964      0.954
+      Hymenolepis nana       2200        203          1      0.674      0.914      0.859
+Opisthorchis viverrine       2200        200      0.984       0.98      0.985      0.875
+       Paragonimus spp       2200        209       0.81      0.976      0.945      0.911
+            Taenia spp       2200        204      0.996      0.995      0.995      0.968
+   Trichuris trichiura       2200        200      0.995      0.947      0.995      0.931
+Speed: 0.1ms pre-process, 5.0ms inference, 0.7ms NMS per image at shape (32, 3, 640, 640)
+Results saved to runs/val/exp4
