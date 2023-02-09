@@ -91,7 +91,7 @@ class Master(ttk.Frame):
         # Analyze Depth
         self.depth_label = ttk.Label(self.analyze_frame, text="Depth")
         self.depth_label.grid(row=0, column=0, padx=5, pady=5)
-        self.depth_spin = ttk.Spinbox(self.analyze_frame, from_=1, to=5, increment=1, width=4)
+        self.depth_spin = ttk.Spinbox(self.analyze_frame, from_=1, to=8, increment=1, width=4)
         self.depth_spin.set(1)
         self.depth_spin.grid(row=0, column=1, padx=5, pady=5)
 
@@ -225,27 +225,18 @@ class Master(ttk.Frame):
                 displace = ((img.shape[1] - img.shape[0]) // 2, 0)
             img_new = np.zeros((size, size, 3))
             img_new[displace[0]:displace[0]+img.shape[0], displace[1]:displace[1]+img.shape[1], :] = img[:, :, :]
+            img_size = img_new.shape[0]
 
             # Cropping
-            input_lst = [[img_new]]
-            place_lst = [[(0, 0)]]
-            for d in range(1, depth):
-                temp_img = []
-                temp_pos = []
-                for img, pos in zip(input_lst[d-1], place_lst[d-1]):
-                    size = img.shape[0]
-                    temp_img.append(img[:size//2, :size//2, :])
-                    temp_pos.append((pos[0], pos[1]))
-                    temp_img.append(img[:size//2, size//2:, :])
-                    temp_pos.append((pos[0], pos[1]+size//2))
-                    temp_img.append(img[size//2:, :size//2, :])
-                    temp_pos.append((pos[0]+size//2, pos[1]))
-                    temp_img.append(img[size//2:, size//2:, :])
-                    temp_pos.append((pos[0]+size//2, pos[1]+size//2))
-                input_lst.append(temp_img)
-                place_lst.append(temp_pos)
-            input_lst = [j for i in input_lst for j in i]
-            place_lst = [j for i in place_lst for j in i]
+            input_lst = []
+            place_lst = []
+            for d in range(1, depth+1):   
+                for i in range(d):
+                    for j in range(d):
+                        size = img_size // d
+                        pos = (int(img_size * i / d), int(img_size * j / d))
+                        input_lst.append(img_new[pos[0]:pos[0]+size, pos[1]:pos[1]+size])
+                        place_lst.append(pos)   
 
             # Inference
             confidence = float(self.confidence_spin.get())
@@ -264,14 +255,18 @@ class Master(ttk.Frame):
                     boxes.append(pred_)
 
             # Process
+            nms = "size"
+            overlap = "piou"
             if boxes: 
                 boxes = torch.cat(boxes)
             
                 # NMS
                 wh = boxes[:, 2:4] - boxes[:, 0:2]
                 area = wh[:, 0] * wh[:, 1]
-                confs, order = torch.sort(boxes[:, 4], descending=True)
-                order = order[confs > confidence]
+                if nms == "confidence":
+                    _, order = torch.sort(boxes[:, 4], descending=True)
+                elif nms == "size":
+                    _, order = torch.sort(area, descending=True)
                 keep = []
                 while order.shape[0] > 0:
                     keep.append(order[0])
@@ -281,12 +276,16 @@ class Master(ttk.Frame):
                     inter_2 = torch.minimum(boxes[idx_a, 2:4], boxes[idx_b, 2:4])
                     inter = torch.clamp(inter_2 - inter_1, 0)
                     area_i = inter[:, 0] * inter[:, 1]
-                    #area_u = area[idx_a] + area[idx_b] - area_i
-                    area_s = torch.minimum(area[idx_a], area[idx_b])
-                    #iou = area_i / area_u
-                    piou = area_i / area_s
-                    same = boxes[idx_a, 5] == boxes[idx_b, 5]
-                    order = order[torch.logical_or(piou<0.8, same==False)]
+                    if overlap == "piou":
+                        area_s = torch.minimum(area[idx_a], area[idx_b])
+                        piou = area_i / area_s
+                        same = boxes[idx_a, 5] == boxes[idx_b, 5]
+                        order = order[torch.logical_or(piou<0.8, same==False)]
+                    elif overlap == "iou":
+                        area_u = area[idx_a] + area[idx_b] - area_i
+                        iou = area_i / area_u
+                        same = boxes[idx_a, 5] == boxes[idx_b, 5]
+                        order = order[torch.logical_or(iou<0.8, same==False)]
 
                 # Add Result
                 results.render()

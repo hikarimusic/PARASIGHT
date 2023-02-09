@@ -23,8 +23,11 @@ def read_mask():
     mask = pd.read_csv(os.path.join(os.getcwd(), 'test_mask.csv'))
     result = []
     for id, row in mask.iterrows():
-        result.append(int(row["Image"][1:-4])-1)
+        if row['Confidence'] >= 0.86:
+            if int(row["Image"][:-4])-1 not in result:
+                result.append(int(row["Image"][:-4])-1)
     print(result)
+    print(len(result))
 
 #compute_hsv_mean_std()
 read_mask()

@@ -19,7 +19,8 @@ def wholeslide_generate(egg, num, src_pth, tgt_pth, parasite):
         os.mkdir(tgt_pth)
         for i in range(32):
             for j in range(32):
-                pth = os.path.join(tgt_pth, f"{i}_{j}.jpeg")
+                i_s, j_s = str(i).zfill(2), str(j).zfill(2)
+                pth = os.path.join(tgt_pth, f"{i_s}_{j_s}.jpeg")
                 img = background_generate(img_lst, lbl_lst)
                 cv2.imwrite(pth, img)
                 print(f"background {i}_{j} complete")
@@ -40,7 +41,8 @@ def wholeslide_generate(egg, num, src_pth, tgt_pth, parasite):
         if egg_num >= len(egg_lst):
             break
         b_i, b_j = sel[i]//32, sel[i]%32
-        b_pth = os.path.join(tgt_pth, f"{b_i}_{b_j}.jpeg")
+        b_i_s, b_j_s = str(b_i).zfill(2), str(b_j).zfill(2)
+        b_pth = os.path.join(tgt_pth, f"{b_i_s}_{b_j_s}.jpeg")
         back = cv2.imread(b_pth) / 255.
         egg = cv2.imread(img_lst[egg_lst[egg_num]]) / 255.
         lbl = []
@@ -64,17 +66,17 @@ def wholeslide_generate(egg, num, src_pth, tgt_pth, parasite):
         for box in lbl:
             box[1] += x1
             box[2] += y1
-            info = [parasite[box[0]], 1., box[1], box[2], box[3], box[4], f"{b_i}_{b_j}.jpeg"]
+            info = [parasite[box[0]], 1., box[1], box[2], box[3], box[4], f"{b_i_s}_{b_j_s}.jpeg"]
             gt.append(info)
         #show_image(back)
         back = np.clip(back * 255, a_min=0, a_max=255)
         cv2.imwrite(b_pth, back)
-        print(f"Add to {b_i}_{b_j}.jpeg")
+        print(f"Add to {b_i_s}_{b_j_s}.jpeg")
     gt = pd.DataFrame(gt, columns=["Parasite", "Confidence", "X", "Y", "W", "H", "Image"])
     gt.to_csv(os.path.join(tgt_pth, "label.csv"), index=False)
 
-def background_generate(img_lst, lbl_lst):
-    img_broke = [23, 58, 71, 72, 73, 117, 117, 150, 244, 323, 325, 387, 404, 470, 518, 569, 590, 652, 800, 808, 821, 841, 867, 894, 977, 1027, 1056, 1079, 1112, 1173, 1180, 1201, 1220, 1242, 1282, 1282, 1352, 1478, 1539, 1568, 1577, 1616, 1621, 1621, 1741, 1866, 1894, 1953, 1958, 2127, 2131, 2138, 2174, 2180]
+def background_generate(img_lst, lbl_lst):  
+    img_broke = [51, 244, 334, 475, 569, 585, 590, 673, 800, 1056, 1180, 1621, 1735, 1884, 1894, 1958, 2027]
     col_row = []
     for i in range(4):
         col = []
@@ -194,21 +196,11 @@ def background_mask(src_pth, tgt_pth):
             #img[xyxy[1]:xyxy[3], xyxy[0]:xyxy[2], :] = [np.mean(img[xyxy[1]:xyxy[3], xyxy[0]:xyxy[2], :], axis=(0, 1))]
             img[xyxy[1]:xyxy[3], xyxy[0]:xyxy[2], :] = np.zeros_like(img[xyxy[1]:xyxy[3], xyxy[0]:xyxy[2], :])
             img, _ = Padding(img, 1024)
-
-            # 1x
-            img_a = np.clip(img * 255, a_min=0, a_max=255)
-            img_pth = os.path.join(tgt_pth, 'a'+str(os.path.basename(img_lst[id])))
-            cv2.imwrite(img_pth, img_a)
-            # 2x
-            img_b = np.zeros((2048, 2048, 3))
-            img_b[:1024, :1024, :] = img_a[:, :, :]
-            img_pth = os.path.join(tgt_pth, 'b'+str(os.path.basename(img_lst[id])))
-            cv2.imwrite(img_pth, img_b)  
-            # 4x
-            img_c = np.zeros((4096, 4096, 3))
-            img_c[:1024, :1024, :] = img_a[:, :, :]
-            img_pth = os.path.join(tgt_pth, 'c'+str(os.path.basename(img_lst[id])))
-            cv2.imwrite(img_pth, img_c)  
+            img = np.concatenate([img, img, img, img], axis=0)
+            img = np.concatenate([img, img, img, img], axis=1)
+            img = np.clip(img * 255, a_min=0, a_max=255)
+            img_pth = os.path.join(tgt_pth, os.path.basename(img_lst[id]))
+            cv2.imwrite(img_pth, img)  
 
             print(f"Saved {img_pth}")
 

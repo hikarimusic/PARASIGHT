@@ -1,0 +1,153 @@
+'''
+input_lst = [[img_new]]
+place_lst = [[(0, 0)]]
+for d in range(1, depth):
+    temp_img = []
+    temp_pos = []
+    for img, pos in zip(input_lst[d-1], place_lst[d-1]):
+        size = img.shape[0]
+        temp_img.append(img[:size//2, :size//2, :])
+        temp_pos.append((pos[0], pos[1]))
+        temp_img.append(img[:size//2, size//2:, :])
+        temp_pos.append((pos[0], pos[1]+size//2))
+        temp_img.append(img[size//2:, :size//2, :])
+        temp_pos.append((pos[0]+size//2, pos[1]))
+        temp_img.append(img[size//2:, size//2:, :])
+        temp_pos.append((pos[0]+size//2, pos[1]+size//2))
+    input_lst.append(temp_img)
+    place_lst.append(temp_pos)
+input_lst = [j for i in input_lst for j in i]
+place_lst = [j for i in place_lst for j in i]
+'''
+
+'''
+    def analyze(self):
+        nms = "size"
+        precise = True
+
+        # Image List
+        if not self.img_pth:
+            messagebox.showerror(
+                title="Error",
+                message="Please open an image or folder to analyze."
+            )
+            return
+        if os.path.isdir(self.img_pth):
+            img_lst = [f for f in os.listdir(self.img_pth) if f.endswith('.png') or f.endswith('.jpeg') or f.endswith('.jpg')]
+            img_lst.sort()
+            img_lst = [os.path.join(self.img_pth, f) for f in img_lst]
+        else:
+            img_lst = [self.img_pth]
+
+        # Start Detection
+        self.analyze_progress_2.tkraise()
+        img_cnt = 0
+        for item in self.result_tree.get_children():
+            self.result_tree.delete(item)
+        self.update()
+
+        # Detect
+        depth = int(self.depth_spin.get())
+        self.egg_imgs = []
+        egg_cnt = 0
+        record = []
+        for img_name in img_lst:
+            # Padding
+            img = cv2.imread(img_name)[:,:,::-1]
+            if img.shape[0] > img.shape[1]:
+                size = img.shape[0]
+                displace = (0, (img.shape[0] - img.shape[1]) // 2)
+            else:
+                size = img.shape[1]
+                displace = ((img.shape[1] - img.shape[0]) // 2, 0)
+            img_new = np.zeros((size, size, 3))
+            img_new[displace[0]:displace[0]+img.shape[0], displace[1]:displace[1]+img.shape[1], :] = img[:, :, :]
+
+            # Cropping
+            input_lst = [img_new]
+            place_lst = [(0, 0)]
+            for d in range(1, 2*depth-1):   
+                if d % 2 == 1:
+                    if precise == False:
+                        continue
+                    size = img_new.shape[0] // (d+1)
+                    disp = size // 2
+                else:
+                    size = img_new.shape[0] // d
+                    disp = 0
+                for i in range(d):
+                    for j in range(d):
+                        pos = (disp+size*i, disp+size*j)
+                        input_lst.append(img_new[pos[0]:pos[0]+size, pos[1]:pos[1]+size])
+                        place_lst.append(pos)    
+
+            # Inference
+            confidence = float(self.confidence_spin.get())
+            self.model.conf = confidence
+            results = self.model(input_lst)
+            boxes = []
+            for i, (pred, place) in enumerate(zip(results.pred, place_lst)):
+                if pred.numel() != 0:
+                    pred_ = pred.clone()
+                    pred_[:,0] += place[1]
+                    pred_[:,1] += place[0]
+                    pred_[:,2] += place[1]
+                    pred_[:,3] += place[0]
+                    img_tag = torch.full((len(pred), 1), i, device='cuda')
+                    pred_ = torch.cat([pred_, img_tag], dim=1)
+                    boxes.append(pred_)
+
+            # Process
+            if boxes: 
+                boxes = torch.cat(boxes)
+            
+                # NMS
+                wh = boxes[:, 2:4] - boxes[:, 0:2]
+                area = wh[:, 0] * wh[:, 1]
+                if nms == "confidence":
+                    _, order = torch.sort(boxes[:, 4], descending=True)
+                elif nms == "size":
+                    _, order = torch.sort(area, descending=True)
+                keep = []
+                while order.shape[0] > 0:
+                    keep.append(order[0])
+                    idx_a = order[0:1].repeat(order.shape[0])
+                    idx_b = order
+                    inter_1 = torch.maximum(boxes[idx_a, 0:2], boxes[idx_b, 0:2])
+                    inter_2 = torch.minimum(boxes[idx_a, 2:4], boxes[idx_b, 2:4])
+                    inter = torch.clamp(inter_2 - inter_1, 0)
+                    area_i = inter[:, 0] * inter[:, 1]
+                    #area_u = area[idx_a] + area[idx_b] - area_i
+                    area_s = torch.minimum(area[idx_a], area[idx_b])
+                    #iou = area_i / area_u
+                    piou = area_i / area_s
+                    same = boxes[idx_a, 5] == boxes[idx_b, 5]
+                    order = order[torch.logical_or(piou<0.8, same==False)]
+
+                # Add Result
+                results.render()
+                for k in keep:
+                    info = boxes[k].tolist()
+                    parasite = self.parasite_name[int(info[5])]
+                    c = info[4]
+                    confidence = '{0:.0%}'.format(c)
+                    x, y = int((info[0]+info[2])/2), int((info[1]+info[3])/2)
+                    w, h = int(info[2]-info[0]), int(info[3]-info[1])
+                    position = "({}, {})".format(x, y)
+                    size = "({}, {})".format(w, h)
+                    image = os.path.basename(img_name)
+                    detect = [parasite, confidence, position, size, image]
+                    self.result_tree.insert("", index="end", values=detect, tags=egg_cnt)
+                    egg_cnt += 1
+                    self.egg_imgs.append(results.ims[boxes[k, 6].int()])
+                    record.append([parasite, '{:.2f}'.format(c), x, y, w, h, image])
+                    self.update()
+
+            # Progress
+            img_cnt += 1
+            self.progress_bar['value'] = img_cnt * 100 / len(img_lst)
+            self.update()
+        
+        self.record = pd.DataFrame(record, columns=["Parasite", "Confidence", "X", "Y", "W", "H", "Image"])
+        self.analyze_progress_1.tkraise()
+'''

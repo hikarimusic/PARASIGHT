@@ -1,0 +1,4 @@
+                             TP   FN    FP  Recall  Precision  F1 Score
+conf false                 47.0  3.0  18.0    0.94   0.723077  0.408696
+conf true                  48.0  2.0  15.0    0.96   0.761905  0.424779
+size true                  50.0  0.0  9.0      1.0   0.847458  0.458716
